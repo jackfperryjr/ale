@@ -1,8 +1,17 @@
 const API_BASE = 'http://localhost:8000';
 
+// Generate a session ID once per browser install and persist it.
+// Lets the Brewery tie submissions to a browser without requiring a login.
+async function getSessionId() {
+  const stored = await chrome.storage.local.get('ale_session_id');
+  if (stored.ale_session_id) return stored.ale_session_id;
+  const id = crypto.randomUUID();
+  await chrome.storage.local.set({ ale_session_id: id });
+  return id;
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'QUICK_ANALYZE') {
-    // Fire-and-forget from content script bottle cap click
     analyzeUrl(msg.url, msg.videoId).then((data) => {
       if (sender.tab?.id && data && !data.error) {
         chrome.tabs.sendMessage(sender.tab.id, {
@@ -18,7 +27,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   if (msg.type === 'ANALYZE') {
     analyzeUrl(msg.url, msg.videoId).then(sendResponse);
-    return true; // keep channel open for async response
+    return true;
   }
 
   if (msg.type === 'QUEUE_NOTARY') {
@@ -29,10 +38,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 async function analyzeUrl(url, videoId) {
   try {
+    const sessionId = await getSessionId();
     const res = await fetch(`${API_BASE}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, video_id: videoId ?? null })
+      body: JSON.stringify({ url, video_id: videoId ?? null, session_id: sessionId })
     });
     return await res.json();
   } catch (err) {
@@ -43,10 +53,16 @@ async function analyzeUrl(url, videoId) {
 
 async function queueNotary(url, videoId, analysisId) {
   try {
+    const sessionId = await getSessionId();
     const res = await fetch(`${API_BASE}/queue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, video_id: videoId ?? null, analysis_id: analysisId ?? null })
+      body: JSON.stringify({
+        url,
+        video_id: videoId ?? null,
+        analysis_id: analysisId ?? null,
+        session_id: sessionId
+      })
     });
     return await res.json();
   } catch (err) {

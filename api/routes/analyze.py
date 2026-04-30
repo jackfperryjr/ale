@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..db.database import get_db
-from ..db.models import Analysis, AnalysisStatus
+from ..db.models import Analysis
 from ..detection.hive import detect
 
 router = APIRouter()
@@ -12,14 +12,14 @@ router = APIRouter()
 class AnalyzeRequest(BaseModel):
     url: str
     video_id: str | None = None
+    session_id: str | None = None
 
 
 @router.post("/analyze")
 async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
-    # Return a cached result for this URL if one exists
     cached = (
         db.query(Analysis)
-        .filter(Analysis.url == req.url, Analysis.status == AnalysisStatus.complete)
+        .filter(Analysis.url == req.url, Analysis.status == "complete")
         .first()
     )
     if cached:
@@ -36,10 +36,11 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
     record = Analysis(
         url=req.url,
         video_id=req.video_id,
+        session_id=req.session_id,
         reality_score=result["reality_score"],
         label=result["label"],
         raw_result={"details": result.get("details"), "raw": result.get("raw")},
-        status=AnalysisStatus.complete,
+        status="complete",
     )
     db.add(record)
     db.commit()

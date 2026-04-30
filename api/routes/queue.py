@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..db.database import get_db
-from ..db.models import NotaryQueue, QueueStatus
+from ..db.models import NotaryQueue
 
 router = APIRouter()
 
@@ -14,10 +14,11 @@ class QueueRequest(BaseModel):
     url: str
     video_id: str | None = None
     analysis_id: str | None = None
+    session_id: str | None = None
 
 
 class QueueUpdateRequest(BaseModel):
-    status: QueueStatus
+    status: str
     notes: str | None = None
 
 
@@ -27,6 +28,7 @@ def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
         url=req.url,
         video_id=req.video_id,
         analysis_id=req.analysis_id,
+        session_id=req.session_id,
     )
     db.add(item)
     db.commit()
@@ -35,7 +37,7 @@ def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/queue")
-def list_queue(status: QueueStatus = QueueStatus.pending, db: Session = Depends(get_db)):
+def list_queue(status: str = "pending", db: Session = Depends(get_db)):
     return (
         db.query(NotaryQueue)
         .filter(NotaryQueue.status == status)
@@ -45,9 +47,7 @@ def list_queue(status: QueueStatus = QueueStatus.pending, db: Session = Depends(
 
 
 @router.patch("/queue/{item_id}")
-def update_queue_item(
-    item_id: str, req: QueueUpdateRequest, db: Session = Depends(get_db)
-):
+def update_queue_item(item_id: str, req: QueueUpdateRequest, db: Session = Depends(get_db)):
     item = db.query(NotaryQueue).filter(NotaryQueue.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Queue item not found")

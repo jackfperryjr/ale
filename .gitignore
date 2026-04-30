@@ -1,18 +1,42 @@
-# Credentials — never commit
+# ── Credentials ──────────────────────────────────────────────
 .env
+.env.local
+portal/.env
+portal/.env.local
 
-# Python
+# ── Python ───────────────────────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 .venv/
 venv/
 *.egg-info/
+dist/
+build/
+.pytest_cache/
 
-# Database
+# ── Node ─────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.turbo/
+
+# ── Prisma ───────────────────────────────────────────────────
+portal/prisma/migrations/
+
+# ── Database ─────────────────────────────────────────────────
 *.db
 *.sqlite3
 
-# OS
+# ── OS ───────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ── IDE ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.user

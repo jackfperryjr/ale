@@ -1,23 +1,9 @@
-import enum
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Enum, Float, JSON, String, Text
+from sqlalchemy import Column, DateTime, Float, JSON, String, Text
 
 from .database import Base
-
-
-class AnalysisStatus(str, enum.Enum):
-    pending = "pending"
-    complete = "complete"
-    error = "error"
-
-
-class QueueStatus(str, enum.Enum):
-    pending = "pending"
-    reviewing = "reviewing"
-    certified = "certified"
-    rejected = "rejected"
 
 
 def _now():
@@ -37,7 +23,9 @@ class Analysis(Base):
     reality_score = Column(Float)
     label = Column(String)
     raw_result = Column(JSON)
-    status = Column(Enum(AnalysisStatus), default=AnalysisStatus.pending)
+    # "pending" | "complete" | "error"
+    status = Column(String, nullable=False, default="complete")
+    session_id = Column(String, index=True)
     created_at = Column(DateTime, default=_now)
 
 
@@ -48,7 +36,9 @@ class NotaryQueue(Base):
     url = Column(String, nullable=False)
     video_id = Column(String)
     analysis_id = Column(String)
-    status = Column(Enum(QueueStatus), default=QueueStatus.pending)
+    # "pending" | "reviewing" | "certified" | "rejected"
+    status = Column(String, nullable=False, default="pending")
     notes = Column(Text)
+    session_id = Column(String, index=True)
     created_at = Column(DateTime, default=_now)
     updated_at = Column(DateTime, default=_now)
