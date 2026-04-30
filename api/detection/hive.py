@@ -67,10 +67,16 @@ def _parse_details(data: dict) -> dict:
 def _mock(url: str) -> dict:
     random.seed(sum(ord(c) for c in url))
     score = round(max(0.0, min(100.0, random.gauss(75, 18))), 1)
+    ai_prob = round((100 - score) / 100, 3)
     return {
         "reality_score": score,
         "label": _label(score),
-        "details": {"mock": True},
+        "details": {
+            "not_ai_generated": round(score / 100, 3),
+            "ai_generated": round(ai_prob * 0.7, 3),
+            "deepfake": round(ai_prob * 0.3, 3),
+            "ai_generated_audio": None,
+        },
         "raw": {"mock": True},
     }
 
