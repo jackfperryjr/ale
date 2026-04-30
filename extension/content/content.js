@@ -21,10 +21,9 @@ function buildCap() {
   cap.title = 'ALE — Click to verify this content';
   cap.innerHTML = `
     <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="16" cy="16" r="14" fill="#C8860A" stroke="#8B5E0A" stroke-width="2"/>
-      <circle cx="16" cy="16" r="10" fill="#E8A020" stroke="#C8860A" stroke-width="1"/>
+      <circle cx="16" cy="16" r="14" fill="#0D1A22" stroke="#E8A020" stroke-width="2"/>
       <text x="16" y="20" text-anchor="middle" font-family="serif" font-size="11"
-            font-weight="bold" fill="white">ALE</text>
+            font-weight="bold" fill="#E8A020">ALE</text>
     </svg>
   `;
 

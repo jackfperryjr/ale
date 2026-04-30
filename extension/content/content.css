@@ -6,8 +6,8 @@
   height: 40px;
   cursor: pointer;
   z-index: 9999;
-  transition: transform 0.2s ease;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  transition: transform 0.2s ease, filter 0.3s ease;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7));
 }
 
 #ale-bottle-cap:hover {
@@ -18,12 +18,12 @@
   animation: ale-spin 1.2s linear infinite;
 }
 
-#ale-bottle-cap.ale-real circle:first-child {
-  fill: #2D8A4E;
+#ale-bottle-cap.ale-real {
+  filter: drop-shadow(0 0 8px #00C875) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-#ale-bottle-cap.ale-skunked circle:first-child {
-  fill: #8B2020;
+#ale-bottle-cap.ale-skunked {
+  filter: drop-shadow(0 0 8px #E03050) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 @keyframes ale-spin {
