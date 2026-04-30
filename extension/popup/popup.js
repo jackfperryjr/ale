@@ -14,11 +14,11 @@ async function init() {
   const urlEl = document.getElementById('currentUrl');
   urlEl.textContent = currentUrl.length > 52 ? currentUrl.slice(0, 49) + '…' : currentUrl;
 
-  const supported = /youtube\.com|x\.com|twitter\.com/.test(currentUrl);
-  const verifyBtn = document.getElementById('verifyBtn');
-  verifyBtn.disabled = !supported;
-  if (!supported) {
-    setStatus('Navigate to a YouTube or X video to verify.');
+  // Any page can be analyzed — Hive accepts any media URL
+  const isInternalPage = currentUrl.startsWith('chrome://') || currentUrl.startsWith('chrome-extension://');
+  document.getElementById('verifyBtn').disabled = isInternalPage;
+  if (isInternalPage) {
+    setStatus('Cannot verify browser internal pages.');
     return;
   }
 

@@ -3,11 +3,17 @@
   "name": "ALE — Actual Life Extension",
   "version": "0.1.0",
   "description": "Verify if online video content is real or synthetic. Brewed with care.",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "scripting"],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://x.com/*",
-    "https://twitter.com/*"
+    "https://twitter.com/*",
+    "https://www.tiktok.com/*",
+    "https://vimeo.com/*",
+    "https://player.vimeo.com/*",
+    "https://www.instagram.com/*",
+    "https://www.facebook.com/*",
+    "https://www.reddit.com/*"
   ],
   "background": {
     "service_worker": "background/service_worker.js"
@@ -17,7 +23,13 @@
       "matches": [
         "https://www.youtube.com/*",
         "https://x.com/*",
-        "https://twitter.com/*"
+        "https://twitter.com/*",
+        "https://www.tiktok.com/*",
+        "https://vimeo.com/*",
+        "https://player.vimeo.com/*",
+        "https://www.instagram.com/*",
+        "https://www.facebook.com/*",
+        "https://www.reddit.com/*"
       ],
       "js": ["content/content.js"],
       "css": ["content/content.css"]

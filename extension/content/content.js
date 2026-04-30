@@ -1,5 +1,7 @@
 const ALE_ICON_ID = 'ale-bottle-cap';
-const CURRENT_URL = window.location.href;
+
+// Mutable — updated on every SPA navigation
+let currentUrl = window.location.href;
 
 function getVideoId() {
   const host = window.location.hostname;
@@ -33,12 +35,16 @@ function buildCap() {
     cap.classList.add('ale-analyzing');
     chrome.runtime.sendMessage({
       type: 'QUICK_ANALYZE',
-      url: CURRENT_URL,
+      url: currentUrl,        // always reads the live value
       videoId: getVideoId()
     });
   });
 
   return cap;
+}
+
+function resetCap() {
+  document.getElementById(ALE_ICON_ID)?.remove();
 }
 
 function injectBottleCap(player) {
@@ -48,19 +54,37 @@ function injectBottleCap(player) {
 }
 
 function tryInject() {
-  if (window.location.hostname === 'www.youtube.com') {
+  const host = window.location.hostname;
+  if (host === 'www.youtube.com') {
     const player = document.querySelector('#movie_player, ytd-player');
     if (player) injectBottleCap(player);
-  } else {
+  } else if (host === 'x.com' || host === 'twitter.com') {
     document.querySelectorAll('[data-testid="videoPlayer"]').forEach(injectBottleCap);
+  } else if (host === 'www.tiktok.com') {
+    const player = document.querySelector('[class*="DivVideoWrapper"], video');
+    if (player?.parentElement) injectBottleCap(player.parentElement);
+  } else if (host === 'vimeo.com' || host === 'player.vimeo.com') {
+    const player = document.querySelector('.vp-player-layout, #player');
+    if (player) injectBottleCap(player);
+  } else {
+    // Generic fallback: attach to the first visible <video> element's parent
+    const video = document.querySelector('video');
+    if (video?.parentElement) injectBottleCap(video.parentElement);
   }
 }
 
 tryInject();
 
-// YouTube and X are SPAs — watch for player mounts after navigation
 const observer = new MutationObserver(() => {
-  if (!document.getElementById(ALE_ICON_ID)) tryInject();
+  const newUrl = window.location.href;
+  if (newUrl !== currentUrl) {
+    // SPA navigation — tear down old cap and re-inject fresh
+    currentUrl = newUrl;
+    resetCap();
+    tryInject();
+  } else if (!document.getElementById(ALE_ICON_ID)) {
+    tryInject();
+  }
 });
 observer.observe(document.body, { childList: true, subtree: true });
 
@@ -69,7 +93,6 @@ chrome.runtime.onMessage.addListener((msg) => {
   const cap = document.getElementById(ALE_ICON_ID);
   if (!cap) return;
   cap.classList.remove('ale-analyzing');
-  const isReal = msg.score >= 70;
-  cap.classList.add(isReal ? 'ale-real' : 'ale-skunked');
+  cap.classList.add(msg.score >= 70 ? 'ale-real' : 'ale-skunked');
   cap.title = `ALE Score: ${msg.score}% — ${msg.label}`;
 });
