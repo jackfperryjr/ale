@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
 import { updateQueueStatus } from './actions'
 import SignOutButton from './SignOutButton'
 
@@ -17,20 +18,27 @@ function ScoreBadge({ score }: { score: number | null }) {
   const color = score >= 70 ? 'text-ale-real' : score >= 40 ? 'text-ale-mixed' : 'text-ale-skunked'
   const label = score >= 70 ? 'Pure ALE' : score >= 40 ? 'Mixed' : 'Skunked'
   return (
-    <span className={`font-bold ${color}`}>
-      {Math.round(score)}% <span className="font-normal italic text-xs">{label}</span>
+    <span className={`font-bold tabular-nums ${color}`}>
+      {Math.round(score)}%{' '}
+      <span className="font-normal italic text-xs">{label}</span>
     </span>
   )
 }
 
-function truncate(url: string, n = 55) {
-  return url.length > n ? url.slice(0, n) + '…' : url
+function truncate(url: string, n = 52) {
+  try {
+    const { hostname, pathname } = new URL(url)
+    const short = hostname.replace('www.', '') + pathname
+    return short.length > n ? short.slice(0, n) + '…' : short
+  } catch {
+    return url.length > n ? url.slice(0, n) + '…' : url
+  }
 }
 
 export default async function BreweryPage() {
   const session = await getServerSession(authOptions)
 
-  const [pending, reviewing, stats] = await Promise.all([
+  const [pending, reviewing, recentScans, stats] = await Promise.all([
     prisma.notaryQueue.findMany({
       where: { status: 'pending' },
       include: { analysis: true },
@@ -41,8 +49,19 @@ export default async function BreweryPage() {
       include: { analysis: true },
       orderBy: { updatedAt: 'desc' },
     }),
+    prisma.analysis.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      include: {
+        queueItems: {
+          where: { status: { in: ['certified', 'rejected'] } },
+          orderBy: { updatedAt: 'desc' },
+          take: 1,
+        },
+      },
+    }),
     prisma.$transaction([
-      prisma.notaryQueue.count({ where: { status: 'pending' } }),
+      prisma.notaryQueue.count({ where: { status: { in: ['pending', 'reviewing'] } } }),
       prisma.notaryQueue.count({ where: { status: 'certified' } }),
       prisma.analysis.count(),
     ]),
@@ -75,13 +94,14 @@ export default async function BreweryPage() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-6 py-8 space-y-10">
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           {[
-            { label: 'Pending Review', value: pendingCount, color: 'text-yellow-300' },
-            { label: 'Certified',      value: certifiedCount, color: 'text-ale-real' },
-            { label: 'Total Analyses', value: totalAnalyses, color: 'text-ale-amber' },
+            { label: 'In Queue',        value: pendingCount,    color: 'text-yellow-300' },
+            { label: 'Certified',       value: certifiedCount,  color: 'text-ale-real'   },
+            { label: 'Total AI Scans',  value: totalAnalyses,   color: 'text-ale-amber'  },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-ale-card border border-ale-border rounded-lg p-4 text-center">
               <div className={`text-3xl font-bold ${color}`}>{value}</div>
@@ -90,18 +110,20 @@ export default async function BreweryPage() {
           ))}
         </div>
 
-        {/* Queue */}
-        <section>
-          <h2 className="text-lg font-bold text-ale-amber mb-3">
-            Notary Queue
-            {queue.length === 0 && (
-              <span className="ml-3 text-sm font-normal text-ale-muted italic">
-                — all clear, nothing pending
-              </span>
-            )}
-          </h2>
+        {/* ── Notary Queue ─────────────────────────────────────── */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-bold text-ale-amber">Notary Queue</h2>
+            <p className="text-xs text-ale-muted mt-0.5">
+              Content flagged by users for human sign-off. Certify to issue an ALE certificate; reject to mark it synthetic.
+            </p>
+          </div>
 
-          {queue.length > 0 && (
+          {queue.length === 0 ? (
+            <div className="bg-ale-card border border-ale-border rounded-lg px-5 py-8 text-center text-ale-muted italic text-sm">
+              Queue is empty — nothing waiting for review.
+            </div>
+          ) : (
             <div className="bg-ale-card border border-ale-border rounded-lg overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
@@ -130,7 +152,7 @@ export default async function BreweryPage() {
                       <td className="px-4 py-3">
                         <ScoreBadge score={item.analysis?.realityScore ?? null} />
                       </td>
-                      <td className="px-4 py-3 text-ale-muted">
+                      <td className="px-4 py-3 text-ale-muted text-xs">
                         {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
                       </td>
                       <td className="px-4 py-3">
@@ -140,21 +162,20 @@ export default async function BreweryPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2 justify-end">
-                          {item.status === 'pending' && (
-                            <form action={async () => {
-                              'use server'
-                              await updateQueueStatus(item.id, 'reviewing')
-                            }}>
-                              <button className="text-xs px-3 py-1 border border-ale-border rounded hover:border-ale-amber text-ale-muted hover:text-ale-amber transition-colors">
-                                Review
-                              </button>
-                            </form>
-                          )}
+                          <Link
+                            href={`/brewery/review/${item.id}`}
+                            className="text-xs px-3 py-1 border border-ale-border rounded hover:border-ale-amber text-ale-muted hover:text-ale-amber transition-colors"
+                          >
+                            Details →
+                          </Link>
                           <form action={async () => {
                             'use server'
                             await updateQueueStatus(item.id, 'certified')
                           }}>
-                            <button className="text-xs px-3 py-1 bg-ale-real/10 border border-ale-real/30 text-ale-real rounded hover:bg-ale-real/20 transition-colors">
+                            <button
+                              title="Issue an ALE certificate — content verified as real"
+                              className="text-xs px-3 py-1 bg-ale-real/10 border border-ale-real/30 text-ale-real rounded hover:bg-ale-real/20 transition-colors"
+                            >
                               Certify
                             </button>
                           </form>
@@ -162,7 +183,10 @@ export default async function BreweryPage() {
                             'use server'
                             await updateQueueStatus(item.id, 'rejected')
                           }}>
-                            <button className="text-xs px-3 py-1 bg-ale-skunked/10 border border-ale-skunked/30 text-ale-skunked rounded hover:bg-ale-skunked/20 transition-colors">
+                            <button
+                              title="Mark as synthetic or unverifiable"
+                              className="text-xs px-3 py-1 bg-ale-skunked/10 border border-ale-skunked/30 text-ale-skunked rounded hover:bg-ale-skunked/20 transition-colors"
+                            >
                               Reject
                             </button>
                           </form>
@@ -175,6 +199,90 @@ export default async function BreweryPage() {
             </div>
           )}
         </section>
+
+        {/* ── Recent AI Scans ───────────────────────────────────── */}
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-bold text-ale-amber">Recent AI Scans</h2>
+            <p className="text-xs text-ale-muted mt-0.5">
+              Every URL the extension has run through Hive. High scores are likely real; low scores may warrant a closer look.
+            </p>
+          </div>
+
+          {recentScans.length === 0 ? (
+            <div className="bg-ale-card border border-ale-border rounded-lg px-5 py-8 text-center text-ale-muted italic text-sm">
+              No scans yet — use the extension on a YouTube or X video to see results here.
+            </div>
+          ) : (
+            <div className="bg-ale-card border border-ale-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ale-border text-ale-muted text-xs uppercase tracking-wider">
+                    <th className="text-left px-4 py-3">URL</th>
+                    <th className="text-left px-4 py-3">Score</th>
+                    <th className="text-left px-4 py-3">AI Generated</th>
+                    <th className="text-left px-4 py-3">Deepfake</th>
+                    <th className="text-left px-4 py-3">Notary</th>
+                    <th className="text-left px-4 py-3">Notes</th>
+                    <th className="text-left px-4 py-3">Scanned</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentScans.map((scan) => {
+                    const details = (scan.rawResult as any)?.details ?? {}
+                    const review  = scan.queueItems[0] ?? null
+                    return (
+                      <tr key={scan.id} className="border-b border-ale-border last:border-0 hover:bg-ale-amber/5 transition-colors">
+                        <td className="px-4 py-3 max-w-xs">
+                          <a
+                            href={scan.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-ale-amber hover:text-ale-gold underline underline-offset-2"
+                            title={scan.url}
+                          >
+                            {truncate(scan.url)}
+                          </a>
+                        </td>
+                        <td className="px-4 py-3">
+                          <ScoreBadge score={scan.realityScore} />
+                        </td>
+                        <td className="px-4 py-3 text-ale-muted tabular-nums text-xs">
+                          {details.ai_generated != null
+                            ? `${Math.round(details.ai_generated * 100)}%`
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-ale-muted tabular-nums text-xs">
+                          {details.deepfake != null
+                            ? `${Math.round(details.deepfake * 100)}%`
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          {review ? (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[review.status] ?? ''}`}>
+                              {review.status}
+                            </span>
+                          ) : (
+                            <span className="text-ale-muted text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-ale-muted text-xs max-w-[180px]">
+                          {review?.notes
+                            ? <span title={review.notes}>{truncate(review.notes, 40)}</span>
+                            : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-ale-muted text-xs">
+                          {formatDistanceToNow(new Date(scan.createdAt), { addSuffix: true })}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
       </main>
     </div>
   )

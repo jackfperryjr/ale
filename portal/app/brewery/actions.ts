@@ -8,4 +8,6 @@ export async function updateQueueStatus(id: string, status: string, notes?: stri
     data: { status, notes: notes ?? null },
   })
   revalidatePath('/brewery')
+  revalidatePath(`/brewery/review/${id}`)
 }
+
