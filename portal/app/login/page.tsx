@@ -13,7 +13,16 @@ export default async function LoginPage({
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-6">
-      <div className="text-center">
+      <div className="flex flex-col items-center gap-3">
+          <img
+            src="/ale-icon.png"
+            alt="ALE"
+            width={98}
+            height={98}
+            className="rounded"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(232, 160, 32, 0.5))' }}
+          />
+          
         <h1 className="text-5xl font-bold tracking-widest text-ale-amber">ALE</h1>
         <p className="text-ale-muted italic mt-1">The Brewery</p>
       </div>
