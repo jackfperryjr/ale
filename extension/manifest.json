@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "ALE — Actual Life Extension",
+  "name": "ALE — Authenticity Logic Engine",
   "version": "0.1.0",
   "description": "Verify if online video content is real or synthetic. Brewed with care.",
   "permissions": ["activeTab", "storage", "scripting"],

@@ -15,7 +15,7 @@ export default function ReviewActions({
   const [notes, setNotes] = useState(existingNotes ?? '')
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
-  const done = currentStatus === 'certified' || currentStatus === 'rejected'
+  const done = currentStatus === 'verified' || currentStatus === 'rejected'
 
   function submit(status: string) {
     startTransition(async () => {
@@ -28,7 +28,7 @@ export default function ReviewActions({
     <div className="space-y-4">
       <div className="space-y-2">
         <label className="text-xs uppercase tracking-wider text-ale-muted">
-          Notary Notes
+          Brewmaster Notes
         </label>
         <textarea
           value={notes}
@@ -65,7 +65,7 @@ export default function ReviewActions({
             {isPending ? '…' : 'Reject'}
           </button>
           <button
-            onClick={() => submit('certified')}
+            onClick={() => submit('verified')}
             disabled={isPending}
             className="
               px-5 py-2 rounded text-sm font-medium
@@ -74,7 +74,7 @@ export default function ReviewActions({
               transition-colors
             "
           >
-            {isPending ? '…' : 'Certify ✓'}
+            {isPending ? '…' : 'Verify ✓'}
           </button>
         </div>
       )}

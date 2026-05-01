@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'ALE — The Brewery',
-  description: 'Notary dashboard for the Actual Life Extension',
+  description: 'Brewmaster dashboard for the Authenticity Logic Engine',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

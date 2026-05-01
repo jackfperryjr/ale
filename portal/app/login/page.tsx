@@ -29,7 +29,7 @@ export default async function LoginPage({
 
       <div className="bg-ale-card border border-ale-border rounded-lg p-8 w-80 flex flex-col items-center gap-4">
         <p className="text-sm text-ale-muted text-center">
-          Sign in with your Google account to access the notary dashboard.
+          Sign in with your Google account to access the brewmaster dashboard.
         </p>
 
         <SignInButton />

@@ -9,7 +9,7 @@ import SignOutButton from './SignOutButton'
 const STATUS_COLORS: Record<string, string> = {
   pending:   'bg-yellow-900/40 text-yellow-300',
   reviewing: 'bg-cyan-900/40 text-cyan-300',
-  certified: 'bg-emerald-900/40 text-emerald-300',
+  verified: 'bg-emerald-900/40 text-emerald-300',
   rejected:  'bg-red-900/40 text-red-400',
 }
 
@@ -39,12 +39,12 @@ export default async function BreweryPage() {
   const session = await getServerSession(authOptions)
 
   const [pending, reviewing, recentScans, stats] = await Promise.all([
-    prisma.notaryQueue.findMany({
+    prisma.brewmasterQueue.findMany({
       where: { status: 'pending' },
       include: { analysis: true },
       orderBy: { createdAt: 'asc' },
     }),
-    prisma.notaryQueue.findMany({
+    prisma.brewmasterQueue.findMany({
       where: { status: 'reviewing' },
       include: { analysis: true },
       orderBy: { updatedAt: 'desc' },
@@ -54,20 +54,20 @@ export default async function BreweryPage() {
       take: 20,
       include: {
         queueItems: {
-          where: { status: { in: ['certified', 'rejected'] } },
+          where: { status: { in: ['verified', 'rejected'] } },
           orderBy: { updatedAt: 'desc' },
           take: 1,
         },
       },
     }),
     prisma.$transaction([
-      prisma.notaryQueue.count({ where: { status: { in: ['pending', 'reviewing'] } } }),
-      prisma.notaryQueue.count({ where: { status: 'certified' } }),
+      prisma.brewmasterQueue.count({ where: { status: { in: ['pending', 'reviewing'] } } }),
+      prisma.brewmasterQueue.count({ where: { status: 'verified' } }),
       prisma.analysis.count(),
     ]),
   ])
 
-  const [pendingCount, certifiedCount, totalAnalyses] = stats
+  const [pendingCount, verifiedCount, totalAnalyses] = stats
   const queue = [...reviewing, ...pending]
 
   return (
@@ -100,7 +100,7 @@ export default async function BreweryPage() {
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: 'In Queue',        value: pendingCount,    color: 'text-yellow-300' },
-            { label: 'Certified',       value: certifiedCount,  color: 'text-ale-real'   },
+            { label: 'Verified',        value: verifiedCount,  color: 'text-ale-real'   },
             { label: 'Total AI Scans',  value: totalAnalyses,   color: 'text-ale-amber'  },
           ].map(({ label, value, color }) => (
             <div key={label} className="bg-ale-card border border-ale-border rounded-lg p-4 text-center">
@@ -110,12 +110,12 @@ export default async function BreweryPage() {
           ))}
         </div>
 
-        {/* ── Notary Queue ─────────────────────────────────────── */}
+        {/* ── Brewmaster Queue ────────────────────────────────── */}
         <section className="space-y-3">
           <div>
-            <h2 className="text-lg font-bold text-ale-amber">Notary Queue</h2>
+            <h2 className="text-lg font-bold text-ale-amber">Brewmaster Queue</h2>
             <p className="text-xs text-ale-muted mt-0.5">
-              Content flagged by users for human sign-off. Certify to issue an ALE certificate; reject to mark it synthetic.
+              Content flagged by users for human sign-off. Verify to mark content as authentic; reject to mark it synthetic.
             </p>
           </div>
 
@@ -170,13 +170,13 @@ export default async function BreweryPage() {
                           </Link>
                           <form action={async () => {
                             'use server'
-                            await updateQueueStatus(item.id, 'certified')
+                            await updateQueueStatus(item.id, 'verified')
                           }}>
                             <button
-                              title="Issue an ALE certificate — content verified as real"
+                              title="Mark content as authentic — issues a human verification"
                               className="text-xs px-3 py-1 bg-ale-real/10 border border-ale-real/30 text-ale-real rounded hover:bg-ale-real/20 transition-colors"
                             >
-                              Certify
+                              Verify
                             </button>
                           </form>
                           <form action={async () => {
@@ -222,7 +222,7 @@ export default async function BreweryPage() {
                     <th className="text-left px-4 py-3">Score</th>
                     <th className="text-left px-4 py-3">AI Generated</th>
                     <th className="text-left px-4 py-3">Deepfake</th>
-                    <th className="text-left px-4 py-3">Notary</th>
+                    <th className="text-left px-4 py-3">Brewmaster</th>
                     <th className="text-left px-4 py-3">Notes</th>
                     <th className="text-left px-4 py-3">Scanned</th>
                   </tr>

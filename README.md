@@ -1,4 +1,4 @@
-# ALE — Actual Life Extension
+# ALE — Authenticity Logic Engine
 
 A browser extension and web portal for detecting synthetic and AI-generated video content, combining automated machine-learning analysis with a human notarization layer.
 
@@ -10,7 +10,7 @@ ALE operates in two tiers:
 
 **AI-ALE** — When you visit a video page on a supported platform, the extension injects a bottle cap icon onto the video player. Clicking it sends the URL to the ALE API, which runs the content through [Hive AI's](https://thehive.ai/) deepfake and AI-generation detection model. Results return within seconds: a reality score, signal breakdown (AI-generated, deepfake visual, AI-generated audio), and a label from *Pure ALE* to *Skunked*.
 
-**Pro-ALE (The Brewery)** — Any scan can be escalated to a human notary for manual review. Flagged items enter a queue visible in The Brewery dashboard, where a reviewer can inspect the AI signals, add written notes, and either certify the content as genuine or reject it as synthetic. Certified items are tracked against the original scan record.
+**Pro-ALE (The Brewery)** — Any scan can be escalated to a human for manual review. Flagged items enter a queue visible in The Brewery dashboard, where a reviewer can inspect the AI signals, add written notes, and either verify the content as genuine or reject it as synthetic. Verified items are tracked against the original scan record.
 
 ---
 
@@ -35,7 +35,7 @@ ALE operates in two tiers:
 │               FastAPI Backend                   │
 │                                                 │
 │  POST /analyze  ─── calls Hive, caches result  │
-│  POST /queue    ─── adds item to notary queue  │
+│  POST /queue    ─── adds item to brewmaster queue │
 │  PATCH /queue/{id} ── update status/notes      │
 └──────────┬─────────────────────────────────────┘
            │ PostgreSQL (Neon)
@@ -266,7 +266,7 @@ Stores every AI scan result.
 | `session_id`   | string  | Anonymous extension session UUID        |
 | `created_at`   | datetime| UTC timestamp                           |
 
-### `notary_queue`
+### `human_queue`
 
 Tracks items submitted for human review.
 
@@ -275,8 +275,8 @@ Tracks items submitted for human review.
 | `id`          | UUID    | Primary key                                      |
 | `url`         | string  | The flagged URL                                  |
 | `analysis_id` | UUID?   | FK to `analyses`                                 |
-| `status`      | string  | `pending` → `reviewing` → `certified`/`rejected` |
-| `notes`       | text?   | Notary's written observations                    |
+| `status`      | string  | `pending` → `reviewing` → `verified`/`rejected`  |
+| `notes`       | text?   | human written observations                    |
 | `session_id`  | string  | Anonymous extension session UUID                 |
 | `created_at`  | datetime| UTC timestamp                                    |
 | `updated_at`  | datetime| Last status change                               |

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from ..db.database import get_db
-from ..db.models import NotaryQueue
+from ..db.models import BrewmasterQueue
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ class QueueUpdateRequest(BaseModel):
 
 @router.post("/queue")
 def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
-    item = NotaryQueue(
+    item = BrewmasterQueue(
         url=req.url,
         video_id=req.video_id,
         analysis_id=req.analysis_id,
@@ -39,16 +39,16 @@ def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
 @router.get("/queue")
 def list_queue(status: str = "pending", db: Session = Depends(get_db)):
     return (
-        db.query(NotaryQueue)
-        .filter(NotaryQueue.status == status)
-        .order_by(NotaryQueue.created_at)
+        db.query(BrewmasterQueue)
+        .filter(BrewmasterQueue.status == status)
+        .order_by(BrewmasterQueue.created_at)
         .all()
     )
 
 
 @router.patch("/queue/{item_id}")
 def update_queue_item(item_id: str, req: QueueUpdateRequest, db: Session = Depends(get_db)):
-    item = db.query(NotaryQueue).filter(NotaryQueue.id == item_id).first()
+    item = db.query(BrewmasterQueue).filter(BrewmasterQueue.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Queue item not found")
 

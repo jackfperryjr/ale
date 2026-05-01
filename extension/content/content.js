@@ -38,7 +38,7 @@ function buildPanel() {
   panel.innerHTML = `
     <div class="alep-header">
       <span class="alep-logo">ALE</span>
-      <span class="alep-tagline">Actual Life Extension</span>
+      <span class="alep-tagline">Authenticity Logic Engine</span>
       <button class="alep-close" id="alep-close">✕</button>
     </div>
     <div class="alep-url" id="alep-url"></div>
@@ -67,7 +67,7 @@ function buildPanel() {
     </div>
     <div class="alep-actions">
       <button id="alep-verify" class="alep-btn-verify" style="display:none">Re-analyze</button>
-      <button id="alep-notary" class="alep-btn-notary" style="display:none">Request Human Notary</button>
+      <button id="alep-brewmaster" class="alep-btn-notary" style="display:none">Request Human Verification</button>
     </div>
     <div class="alep-status" id="alep-status"></div>
   `;
@@ -82,9 +82,9 @@ function buildPanel() {
     runAnalysis();
   });
 
-  panel.querySelector('#alep-notary').addEventListener('click', (e) => {
+  panel.querySelector('#alep-brewmaster').addEventListener('click', (e) => {
     e.stopPropagation();
-    requestNotary();
+    requestBrewmaster();
   });
 
   // Swallow all clicks so they don't reach the video player underneath
@@ -192,17 +192,17 @@ function renderScore(data) {
   }
 
   // Show notary option for anything not confidently real
-  const notaryBtn = panelEl('alep-notary');
-  if (notaryBtn && val < 85) notaryBtn.style.display = 'block';
+  const brewmasterBtn = panelEl('alep-brewmaster');
+  if (brewmasterBtn && val < 85) brewmasterBtn.style.display = 'block';
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 
 async function runAnalysis() {
   const verifyBtn = panelEl('alep-verify');
-  const notaryBtn = panelEl('alep-notary');
+  const brewmasterBtn = panelEl('alep-brewmaster');
   if (verifyBtn) verifyBtn.disabled = true;
-  if (notaryBtn) notaryBtn.style.display = 'none';
+  if (brewmasterBtn) brewmasterBtn.style.display = 'none';
   setStatus('');
   showPour();
 
@@ -225,13 +225,13 @@ async function runAnalysis() {
   if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.style.display = 'block'; }
 }
 
-async function requestNotary() {
-  const notaryBtn = panelEl('alep-notary');
-  if (notaryBtn) notaryBtn.disabled = true;
-  setStatus('Sending to notary queue…');
+async function requestBrewmaster() {
+  const brewmasterBtn = panelEl('alep-brewmaster');
+  if (brewmasterBtn) brewmasterBtn.disabled = true;
+  setStatus('Sending to brewmaster queue…');
 
   const result = await chrome.runtime.sendMessage({
-    type: 'QUEUE_NOTARY',
+    type: 'QUEUE_BREWMASTER',
     url: currentUrl,
     videoId: currentVideoId,
     analysisId: lastAnalysisId,
@@ -239,12 +239,12 @@ async function requestNotary() {
 
   if (!result || result.error) {
     setStatus(result?.error ?? 'Failed to queue.');
-    if (notaryBtn) notaryBtn.disabled = false;
+    if (brewmasterBtn) brewmasterBtn.disabled = false;
     return;
   }
 
-  setStatus('✓ Queued for human review. A notary will certify this shortly.');
-  if (notaryBtn) notaryBtn.style.display = 'none';
+  setStatus('✓ Queued for human review. A brewmaster will verify this shortly.');
+  if (brewmasterBtn) brewmasterBtn.style.display = 'none';
 }
 
 // ── Bottle cap ────────────────────────────────────────────────────────────────

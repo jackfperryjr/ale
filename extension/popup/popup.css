@@ -163,7 +163,7 @@ body {
 .btn-verify:hover:not(:disabled) { background: #FFB84A; }
 .btn-verify:disabled { background: #1E2830; color: #3D2800; cursor: not-allowed; }
 
-.btn-notary {
+.btn-brewmaster {
   width: 100%;
   padding: 7px;
   background: transparent;
@@ -176,8 +176,8 @@ body {
   transition: background 0.15s;
 }
 
-.btn-notary:hover:not(:disabled) { background: rgba(0,212,200,0.1); }
-.btn-notary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-brewmaster:hover:not(:disabled) { background: rgba(0,212,200,0.1); }
+.btn-brewmaster:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Status ── */
 .ale-status {

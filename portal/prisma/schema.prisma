@@ -22,14 +22,14 @@ model Analysis {
   sessionId    String?  @map("session_id")
   createdAt    DateTime @default(now()) @map("created_at")
 
-  queueItems   NotaryQueue[]
+  queueItems   BrewmasterQueue[]
 
   @@index([url])
   @@index([sessionId])
   @@map("analyses")
 }
 
-model NotaryQueue {
+model BrewmasterQueue {
   id         String    @id @default(uuid())
   url        String
   videoId    String?   @map("video_id")

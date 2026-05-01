@@ -29,14 +29,14 @@ class Analysis(Base):
     created_at = Column(DateTime, default=_now)
 
 
-class NotaryQueue(Base):
+class BrewmasterQueue(Base):
     __tablename__ = "notary_queue"
 
     id = Column(String, primary_key=True, default=_uuid)
     url = Column(String, nullable=False)
     video_id = Column(String)
     analysis_id = Column(String)
-    # "pending" | "reviewing" | "certified" | "rejected"
+    # "pending" | "reviewing" | "verified" | "rejected"
     status = Column(String, nullable=False, default="pending")
     notes = Column(Text)
     session_id = Column(String, index=True)

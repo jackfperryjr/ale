@@ -13,7 +13,7 @@ const CIRCUMFERENCE = 2 * Math.PI * 40
 const STATUS_COLORS: Record<string, string> = {
   pending:   'bg-yellow-900/40 text-yellow-300',
   reviewing: 'bg-cyan-900/40 text-cyan-300',
-  certified: 'bg-emerald-900/40 text-emerald-300',
+  verified: 'bg-emerald-900/40 text-emerald-300',
   rejected:  'bg-red-900/40 text-red-400',
 }
 
@@ -92,7 +92,7 @@ function getThumbnailUrl(url: string, videoId: string | null): string | null {
 
 export default async function ReviewPage({ params }: { params: { id: string } }) {
   const [item, session] = await Promise.all([
-    prisma.notaryQueue.findUnique({
+    prisma.brewmasterQueue.findUnique({
       where: { id: params.id },
       include: { analysis: true },
     }),

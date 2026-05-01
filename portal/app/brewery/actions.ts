@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 
 export async function updateQueueStatus(id: string, status: string, notes?: string) {
-  await prisma.notaryQueue.update({
+  await prisma.brewmasterQueue.update({
     where: { id },
     data: { status, notes: notes ?? null },
   })

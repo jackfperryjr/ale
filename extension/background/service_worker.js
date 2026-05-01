@@ -30,8 +30,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === 'QUEUE_NOTARY') {
-    queueNotary(msg.url, msg.videoId, msg.analysisId).then(sendResponse);
+  if (msg.type === 'QUEUE_BREWMASTER') {
+    queueBrewmaster(msg.url, msg.videoId, msg.analysisId).then(sendResponse);
     return true;
   }
 });
@@ -51,7 +51,7 @@ async function analyzeUrl(url, videoId) {
   }
 }
 
-async function queueNotary(url, videoId, analysisId) {
+async function queueBrewmaster(url, videoId, analysisId) {
   try {
     const sessionId = await getSessionId();
     const res = await fetch(`${API_BASE}/queue`, {

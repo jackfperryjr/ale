@@ -229,7 +229,7 @@
 .alep-btn-verify:hover:not(:disabled) { border-color: #E8A020; color: #E8A020; }
 .alep-btn-verify:disabled { opacity: 0.3; cursor: not-allowed; }
 
-.alep-btn-notary {
+.alep-btn-brewmaster {
   width: 100%;
   padding: 7px;
   background: transparent;
@@ -242,8 +242,8 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.alep-btn-notary:hover:not(:disabled) { background: rgba(232, 160, 32, 0.12); }
-.alep-btn-notary:disabled { opacity: 0.4; cursor: not-allowed; }
+.alep-btn-brewmaster:hover:not(:disabled) { background: rgba(232, 160, 32, 0.12); }
+.alep-btn-brewmaster:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .alep-status {
   padding: 2px 12px 8px;

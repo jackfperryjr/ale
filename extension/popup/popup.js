@@ -82,13 +82,13 @@ function renderScore(data) {
 
   // Offer human notary for anything below "confident real"
   if (score < 85) {
-    document.getElementById('notaryBtn').style.display = 'block';
+    document.getElementById('brewmasterBtn').style.display = 'block';
   }
 }
 
 document.getElementById('verifyBtn').addEventListener('click', async () => {
   document.getElementById('verifyBtn').disabled = true;
-  document.getElementById('notaryBtn').style.display = 'none';
+  document.getElementById('brewmasterBtn').style.display = 'none';
   setStatus('');
   showPour();
 
@@ -111,13 +111,13 @@ document.getElementById('verifyBtn').addEventListener('click', async () => {
   document.getElementById('verifyBtn').disabled = false;
 });
 
-document.getElementById('notaryBtn').addEventListener('click', async () => {
-  const btn = document.getElementById('notaryBtn');
+document.getElementById('brewmasterBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('brewmasterBtn');
   btn.disabled = true;
-  setStatus('Sending to notary queue…');
+  setStatus('Sending to queue…');
 
   const result = await chrome.runtime.sendMessage({
-    type: 'QUEUE_NOTARY',
+    type: 'QUEUE_BREWMASTER',
     url: currentUrl,
     videoId: currentVideoId,
     analysisId: lastAnalysisId
@@ -129,7 +129,7 @@ document.getElementById('notaryBtn').addEventListener('click', async () => {
     return;
   }
 
-  setStatus('✓ Queued for human review. A notary will certify this shortly.');
+  setStatus('✓ Queued for review. A human will verify this shortly.');
   btn.style.display = 'none';
 });
 
