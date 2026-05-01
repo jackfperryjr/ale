@@ -1,7 +1,7 @@
 #ale-bottle-cap {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 58px;
   width: 40px;
   height: 40px;
   cursor: pointer;
@@ -12,6 +12,32 @@
 
 #ale-bottle-cap:hover {
   transform: scale(1.15);
+}
+
+#ale-bottle-cap::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #080E12;
+  border: 1px solid #2A3840;
+  color: #E8DCC8;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 11px;
+  font-style: italic;
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+#ale-bottle-cap:hover::after {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 #ale-bottle-cap.ale-analyzing {

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Float, JSON, String, Text
+from sqlalchemy import Column, DateTime, Float, Integer, JSON, String, Text
 
 from .database import Base
 
@@ -26,6 +26,16 @@ class Analysis(Base):
     # "pending" | "complete" | "error"
     status = Column(String, nullable=False, default="complete")
     session_id = Column(String, index=True)
+    created_at = Column(DateTime, default=_now)
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    session_id = Column(String, unique=True, nullable=False, index=True)
+    email = Column(String, nullable=True)
+    credits = Column(Integer, nullable=False, default=20)
     created_at = Column(DateTime, default=_now)
 
 

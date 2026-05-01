@@ -63,7 +63,7 @@ reality_score = (1 - max(ai_generated, deepfake)) × 100
 
 | Score   | Label       | Meaning                                   |
 |---------|-------------|-------------------------------------------|
-| ≥ 85    | Pure ALE    | Strong indicators of authentic content    |
+| ≥ 85    | Pure ALE    | Strong indicators of genuine content      |
 | 60–84   | Mixed Pour  | Inconclusive — may warrant closer review  |
 | 30–59   | Flat        | Likely synthetic or manipulated           |
 | < 30    | Skunked     | High confidence of AI generation/deepfake |

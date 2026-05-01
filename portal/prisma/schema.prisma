@@ -11,6 +11,16 @@ generator client {
 // SQLAlchemy runs create_all on startup; Prisma reads what's there.
 // If starting fresh, run: npm run db:push
 
+model User {
+  id        String   @id @default(uuid())
+  sessionId String   @unique @map("session_id")
+  email     String?
+  credits   Int      @default(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
 model Analysis {
   id           String   @id @default(uuid())
   url          String

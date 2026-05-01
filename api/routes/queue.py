@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..db.database import get_db
 from ..db.models import BrewmasterQueue
+from ..db.users import QUEUE_COST, get_or_create_user
 
 router = APIRouter()
 
@@ -24,6 +25,13 @@ class QueueUpdateRequest(BaseModel):
 
 @router.post("/queue")
 def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
+    user = get_or_create_user(req.session_id, db) if req.session_id else None
+    if user and user.credits < QUEUE_COST:
+        raise HTTPException(status_code=402, detail="Insufficient credits")
+
+    if user:
+        user.credits -= QUEUE_COST
+
     item = BrewmasterQueue(
         url=req.url,
         video_id=req.video_id,
@@ -33,7 +41,7 @@ def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
     db.add(item)
     db.commit()
     db.refresh(item)
-    return {"id": item.id, "status": item.status, "queued": True}
+    return {"id": item.id, "status": item.status, "queued": True, "credits": user.credits if user else None}
 
 
 @router.get("/queue")

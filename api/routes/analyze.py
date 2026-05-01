@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..db.database import get_db
 from ..db.models import Analysis
+from ..db.users import ANALYZE_COST, get_or_create_user
 from ..detection.hive import detect
 
 router = APIRouter()
@@ -17,6 +18,7 @@ class AnalyzeRequest(BaseModel):
 
 @router.post("/analyze")
 async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
+    # Cached results are free — no Hive call made
     cached = (
         db.query(Analysis)
         .filter(Analysis.url == req.url, Analysis.status == "complete")
@@ -31,7 +33,16 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
             "cached": True,
         }
 
+    # Check credits before calling Hive
+    user = get_or_create_user(req.session_id, db) if req.session_id else None
+    if user and user.credits < ANALYZE_COST:
+        raise HTTPException(status_code=402, detail="Insufficient credits")
+
     result = await detect(req.url)
+
+    # Deduct only after a successful Hive call
+    if user:
+        user.credits -= ANALYZE_COST
 
     record = Analysis(
         url=req.url,
@@ -52,6 +63,7 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
         "label": record.label,
         "details": result.get("details", {}),
         "cached": False,
+        "credits": user.credits if user else None,
     }
 
 

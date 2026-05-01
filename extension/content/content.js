@@ -189,7 +189,7 @@ function renderScore(data) {
     cap.classList.remove('ale-analyzing');
     const ring = cap.querySelector('.ale-cap-ring');
     if (ring) ring.setAttribute('stroke', color);
-    cap.title = `ALE: ${Math.round(val)}% — ${data.label}`;
+    cap.dataset.tooltip = `${Math.round(val)}% — ${data.label}`;
   }
 
   // Show brewmaster option for anything not confidently real
@@ -253,7 +253,7 @@ async function requestBrewmaster() {
 function buildCap() {
   const cap = document.createElement('div');
   cap.id = ALE_CAP_ID;
-  cap.title = 'ALE — Click to verify this content';
+  cap.dataset.tooltip = 'ALE — Click to analyze';
   const iconUrl = chrome.runtime.getURL('icons/android-chrome-192x192.png');
   cap.innerHTML = `
     <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -266,6 +266,11 @@ function buildCap() {
       <image href="${iconUrl}" x="4" y="4" width="24" height="24" clip-path="url(#ale-cap-clip)"/>
     </svg>
   `;
+
+  // Block pointer/mouse events from bubbling to site handlers (e.g. Facebook feed navigation)
+  ['pointerdown', 'mousedown', 'pointerup', 'mouseup'].forEach((evt) => {
+    cap.addEventListener(evt, (e) => { e.stopPropagation(); e.preventDefault(); });
+  });
 
   cap.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -287,8 +292,21 @@ function resetCap() {
 
 function injectBottleCap(player) {
   if (document.getElementById(ALE_CAP_ID)) return;
+  const { width, height } = player.getBoundingClientRect();
+  if (width === 0 || height === 0) return; // not ready yet — observer will retry
   player.style.position = 'relative';
   player.appendChild(buildCap());
+}
+
+// Walk up from a video element to the nearest ancestor that's large enough to host the cap
+function findVideoContainer(video) {
+  let el = video.parentElement;
+  while (el && el !== document.body) {
+    const { width, height } = el.getBoundingClientRect();
+    if (width >= 200 && height >= 150) return el;
+    el = el.parentElement;
+  }
+  return video.parentElement;
 }
 
 function tryInject() {
@@ -298,6 +316,14 @@ function tryInject() {
     if (player) injectBottleCap(player);
   } else if (host === 'x.com' || host === 'twitter.com') {
     document.querySelectorAll('[data-testid="videoPlayer"]').forEach(injectBottleCap);
+  } else if (host === 'www.facebook.com' || host === 'facebook.com') {
+    // Only inject on reel pages, not the feed
+    if (!window.location.pathname.includes('/reel/')) return;
+    const reelWrap = document.querySelector('[data-pagelet*="Reel"], [data-pagelet*="Stories"]');
+    const video = reelWrap
+      ? reelWrap.querySelector('video')
+      : document.querySelector('video');
+    if (video?.parentElement) injectBottleCap(video.parentElement);
   } else if (host === 'www.tiktok.com') {
     const player = document.querySelector('[class*="DivVideoWrapper"], video');
     if (player?.parentElement) injectBottleCap(player.parentElement);

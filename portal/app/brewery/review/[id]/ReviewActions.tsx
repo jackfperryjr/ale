@@ -16,6 +16,7 @@ export default function ReviewActions({
   const [isPending, startTransition] = useTransition()
   const router = useRouter()
   const done = currentStatus === 'verified' || currentStatus === 'rejected'
+  const doneLabel = currentStatus === 'verified' ? 'genuine' : 'synthetic'
 
   function submit(status: string) {
     startTransition(async () => {
@@ -48,7 +49,7 @@ export default function ReviewActions({
 
       {done ? (
         <p className="text-sm italic text-ale-muted text-center">
-          This item has been <span className="text-[#E8DCC8] font-medium">{currentStatus}</span>.
+          This item has been marked <span className="text-[#E8DCC8] font-medium">{doneLabel}</span>.
         </p>
       ) : (
         <div className="flex gap-3 justify-end">
@@ -62,7 +63,7 @@ export default function ReviewActions({
               transition-colors
             "
           >
-            {isPending ? '…' : 'Reject'}
+            {isPending ? '…' : 'Synthetic'}
           </button>
           <button
             onClick={() => submit('verified')}
@@ -74,7 +75,7 @@ export default function ReviewActions({
               transition-colors
             "
           >
-            {isPending ? '…' : 'Verify ✓'}
+            {isPending ? '…' : 'Genuine ✓'}
           </button>
         </div>
       )}
