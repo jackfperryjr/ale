@@ -30,7 +30,7 @@ class Analysis(Base):
 
 
 class BrewmasterQueue(Base):
-    __tablename__ = "notary_queue"
+    __tablename__ = "brewmaster_queue"
 
     id = Column(String, primary_key=True, default=_uuid)
     url = Column(String, nullable=False)

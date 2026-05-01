@@ -44,5 +44,5 @@ model BrewmasterQueue {
 
   @@index([status])
   @@index([sessionId])
-  @@map("notary_queue")
+  @@map("brewmaster_queue")
 }

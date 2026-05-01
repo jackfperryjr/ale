@@ -67,7 +67,7 @@ function buildPanel() {
     </div>
     <div class="alep-actions">
       <button id="alep-verify" class="alep-btn-verify" style="display:none">Re-analyze</button>
-      <button id="alep-brewmaster" class="alep-btn-notary" style="display:none">Request Human Verification</button>
+      <button id="alep-brewmaster" class="alep-btn-brewmaster" style="display:none">Request Human Verification</button>
     </div>
     <div class="alep-status" id="alep-status"></div>
   `;
@@ -183,15 +183,16 @@ function renderScore(data) {
   const labelEl = panelEl('alep-score-label');
   if (labelEl) { labelEl.textContent = label; labelEl.style.color = color; }
 
-  // Update bottle cap glow
+  // Update bottle cap ring color
   const cap = document.getElementById(ALE_CAP_ID);
   if (cap) {
-    cap.classList.remove('ale-analyzing', 'ale-real', 'ale-skunked');
-    cap.classList.add(val >= 70 ? 'ale-real' : 'ale-skunked');
+    cap.classList.remove('ale-analyzing');
+    const ring = cap.querySelector('.ale-cap-ring');
+    if (ring) ring.setAttribute('stroke', color);
     cap.title = `ALE: ${Math.round(val)}% — ${data.label}`;
   }
 
-  // Show notary option for anything not confidently real
+  // Show brewmaster option for anything not confidently real
   const brewmasterBtn = panelEl('alep-brewmaster');
   if (brewmasterBtn && val < 85) brewmasterBtn.style.display = 'block';
 }
@@ -261,7 +262,7 @@ function buildCap() {
           <circle cx="16" cy="16" r="12"/>
         </clipPath>
       </defs>
-      <circle cx="16" cy="16" r="14" fill="#0D1A22" stroke="#E8A020" stroke-width="2"/>
+      <circle class="ale-cap-ring" cx="16" cy="16" r="14" fill="#0D1A22" stroke="#E8A020" stroke-width="2"/>
       <image href="${iconUrl}" x="4" y="4" width="24" height="24" clip-path="url(#ale-cap-clip)"/>
     </svg>
   `;

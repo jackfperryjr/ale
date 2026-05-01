@@ -80,7 +80,7 @@ function renderScore(data) {
 
   document.getElementById('scoreWrap').style.display = 'flex';
 
-  // Offer human notary for anything below "confident real"
+  // Offer human brewmaster for anything below "confident real"
   if (score < 85) {
     document.getElementById('brewmasterBtn').style.display = 'block';
   }

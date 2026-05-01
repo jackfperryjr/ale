@@ -18,13 +18,6 @@
   animation: ale-spin 1.2s linear infinite;
 }
 
-#ale-bottle-cap.ale-real {
-  filter: drop-shadow(0 0 8px #00C875) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-}
-
-#ale-bottle-cap.ale-skunked {
-  filter: drop-shadow(0 0 8px #E03050) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-}
 
 @keyframes ale-spin {
   from { transform: rotate(0deg); }
