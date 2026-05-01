@@ -202,9 +202,9 @@ export default async function BreweryPage() {
                   <tr className="border-b border-ale-border text-ale-muted text-xs uppercase tracking-wider">
                     <th className="text-left px-4 py-3">URL</th>
                     <th className="text-left px-4 py-3">Score</th>
-                    <th className="text-left px-4 py-3">AI Generated</th>
+                    <th className="text-left px-4 py-3">AI</th>
                     <th className="text-left px-4 py-3">Deepfake</th>
-                    <th className="text-left px-4 py-3">Brewmaster</th>
+                    <th className="text-left px-4 py-3">Verification</th>
                     <th className="text-left px-4 py-3">Notes</th>
                     <th className="text-left px-4 py-3">Scanned</th>
                   </tr>
