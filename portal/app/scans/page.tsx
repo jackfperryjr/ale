@@ -59,14 +59,6 @@ export default async function ScansPage() {
             <p className="text-xs text-ale-muted italic">Authenticity Logic Engine</p>
           </div>
         </div>
-        <Link
-          href="https://github.com/jackfperryjr/ale"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-ale-muted hover:text-ale-amber transition-colors"
-        >
-          GitHub →
-        </Link>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">

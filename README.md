@@ -20,13 +20,13 @@ ALE operates in two tiers:
 ┌─────────────────────────────────────────────────┐
 │               Chrome Extension (MV3)            │
 │                                                 │
-│  content.js   ─── injects bottle cap onto      │
+│  content.js   ─── injects bottle cap onto       │
 │                   video player                  │
 │                                                 │
-│  service_worker.js ─── holds session UUID,     │
+│  service_worker.js ─── holds session UUID,      │
 │                        proxies API calls        │
 │                                                 │
-│  popup.js     ─── manual analyze UI,           │
+│  popup.js     ─── manual analyze UI,            │
 │                   result cache                  │
 └───────────────────────┬─────────────────────────┘
                         │ HTTP (REST)
@@ -34,10 +34,10 @@ ALE operates in two tiers:
 ┌─────────────────────────────────────────────────┐
 │               FastAPI Backend                   │
 │                                                 │
-│  POST /analyze  ─── calls Hive, caches result  │
-│  POST /queue    ─── adds item to brewmaster queue │
-│  PATCH /queue/{id} ── update status/notes      │
-└──────────┬─────────────────────────────────────┘
+│  POST /analyze  ─── calls Hive, caches result   │
+│  POST /queue  ─── adds item to brewmaster queue │
+│  PATCH /queue/{id} ── update status/notes       │
+└──────────┬──────────────────────────────────────┘
            │ PostgreSQL (Neon)
            ▼
 ┌─────────────────────────────────────────────────┐
@@ -45,7 +45,7 @@ ALE operates in two tiers:
 │               "The Brewery"                     │
 │                                                 │
 │  /brewery      ─── queue + scan history         │
-│  /brewery/review/[id] ─── per-item review UI   │
+│  /brewery/review/[id] ─── per-item review UI    │
 │                                                 │
 │  Auth: Google OAuth (NextAuth v4)               │
 └─────────────────────────────────────────────────┘
@@ -107,7 +107,7 @@ ale/
 │   ├── main.py                # App entry point, CORS, route mounting
 │   ├── requirements.txt
 │   ├── db/
-│   │   ├── models.py          # SQLAlchemy: Analysis, NotaryQueue
+│   │   ├── models.py          # SQLAlchemy: Analysis, BrewmasterQueue
 │   │   └── database.py        # Engine + session factory
 │   ├── routes/
 │   │   ├── analyze.py         # POST /analyze, GET /analyze/{id}
