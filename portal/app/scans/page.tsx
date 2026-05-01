@@ -7,6 +7,11 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: 'bg-red-900/40 text-red-400',
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  verified: 'genuine',
+  rejected: 'synthetic',
+}
+
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <span className="text-ale-muted">—</span>
   const color = score >= 70 ? 'text-ale-real' : score >= 40 ? 'text-ale-mixed' : 'text-ale-skunked'
@@ -122,7 +127,7 @@ export default async function ScansPage() {
                       <td className="px-4 py-3">
                         {review ? (
                           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[review.status] ?? ''}`}>
-                            {review.status}
+                            {STATUS_LABELS[review.status] ?? review.status}
                           </span>
                         ) : (
                           <span className="text-ale-muted text-xs">—</span>

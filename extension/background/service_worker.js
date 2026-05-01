@@ -36,6 +36,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
+function checkStatus(res) {
+  if (res.status === 402) return { error: "You're out of ALE. Want to pour a fresh batch?" };
+  if (res.status === 429) return { error: 'Too many requests. Give it a moment.' };
+  if (!res.ok)            return { error: `API error (${res.status}).` };
+  return null;
+}
+
 async function analyzeUrl(url, videoId) {
   try {
     const sessionId = await getSessionId();
@@ -44,7 +51,7 @@ async function analyzeUrl(url, videoId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, video_id: videoId ?? null, session_id: sessionId })
     });
-    return await res.json();
+    return checkStatus(res) ?? await res.json();
   } catch (err) {
     console.error('[ALE] /analyze failed:', err);
     return { error: 'Could not reach ALE API. Is it running?' };
@@ -64,7 +71,7 @@ async function queueBrewmaster(url, videoId, analysisId) {
         session_id: sessionId
       })
     });
-    return await res.json();
+    return checkStatus(res) ?? await res.json();
   } catch (err) {
     console.error('[ALE] /queue failed:', err);
     return { error: 'Could not reach ALE API. Is it running?' };

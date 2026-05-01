@@ -7,7 +7,7 @@ load_dotenv()  # reads .env from repo root before any os.getenv calls
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db.database import init_db
-from .routes import analyze, queue
+from .routes import admin, analyze, queue
 
 
 @asynccontextmanager
@@ -27,6 +27,7 @@ app.add_middleware(
 
 app.include_router(analyze.router)
 app.include_router(queue.router)
+app.include_router(admin.router)
 
 
 @app.get("/")

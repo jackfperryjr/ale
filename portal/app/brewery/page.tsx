@@ -3,14 +3,20 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
-import { updateQueueStatus } from './actions'
 import SignOutButton from './SignOutButton'
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:   'bg-yellow-900/40 text-yellow-300',
-  reviewing: 'bg-cyan-900/40 text-cyan-300',
+  pending:  'bg-yellow-900/40 text-yellow-300',
+  brewing:  'bg-cyan-900/40 text-cyan-300',
   verified: 'bg-emerald-900/40 text-emerald-300',
-  rejected:  'bg-red-900/40 text-red-400',
+  rejected: 'bg-red-900/40 text-red-400',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  pending:  'pending',
+  brewing:  'brewing',
+  verified: 'genuine',
+  rejected: 'synthetic',
 }
 
 function ScoreBadge({ score }: { score: number | null }) {
@@ -45,7 +51,7 @@ export default async function BreweryPage() {
       orderBy: { createdAt: 'asc' },
     }),
     prisma.brewmasterQueue.findMany({
-      where: { status: 'reviewing' },
+      where: { status: 'brewing' },
       include: { analysis: true },
       orderBy: { updatedAt: 'desc' },
     }),
@@ -157,40 +163,16 @@ export default async function BreweryPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[item.status] ?? ''}`}>
-                          {item.status}
+                          {STATUS_LABELS[item.status] ?? item.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2 justify-end">
-                          <Link
-                            href={`/brewery/review/${item.id}`}
-                            className="text-xs px-3 py-1 border border-ale-border rounded hover:border-ale-amber text-ale-muted hover:text-ale-amber transition-colors"
-                          >
-                            Details →
-                          </Link>
-                          <form action={async () => {
-                            'use server'
-                            await updateQueueStatus(item.id, 'verified')
-                          }}>
-                            <button
-                              title="Mark content as authentic — issues a human verification"
-                              className="text-xs px-3 py-1 bg-ale-real/10 border border-ale-real/30 text-ale-real rounded hover:bg-ale-real/20 transition-colors"
-                            >
-                              Verify
-                            </button>
-                          </form>
-                          <form action={async () => {
-                            'use server'
-                            await updateQueueStatus(item.id, 'rejected')
-                          }}>
-                            <button
-                              title="Mark as synthetic or unverifiable"
-                              className="text-xs px-3 py-1 bg-ale-skunked/10 border border-ale-skunked/30 text-ale-skunked rounded hover:bg-ale-skunked/20 transition-colors"
-                            >
-                              Reject
-                            </button>
-                          </form>
-                        </div>
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={`/brewery/review/${item.id}`}
+                          className="text-xs px-3 py-1 border border-ale-border rounded hover:border-ale-amber text-ale-muted hover:text-ale-amber transition-colors"
+                        >
+                          Details →
+                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -260,7 +242,7 @@ export default async function BreweryPage() {
                         <td className="px-4 py-3">
                           {review ? (
                             <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[review.status] ?? ''}`}>
-                              {review.status}
+                              {STATUS_LABELS[review.status] ?? review.status}
                             </span>
                           ) : (
                             <span className="text-ale-muted text-xs">—</span>

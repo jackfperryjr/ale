@@ -11,10 +11,17 @@ import SignOutButton from '../../SignOutButton'
 const CIRCUMFERENCE = 2 * Math.PI * 40
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:   'bg-yellow-900/40 text-yellow-300',
-  reviewing: 'bg-cyan-900/40 text-cyan-300',
+  pending:  'bg-yellow-900/40 text-yellow-300',
+  brewing:  'bg-cyan-900/40 text-cyan-300',
   verified: 'bg-emerald-900/40 text-emerald-300',
-  rejected:  'bg-red-900/40 text-red-400',
+  rejected: 'bg-red-900/40 text-red-400',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  pending:  'pending',
+  brewing:  'brewing',
+  verified: 'genuine',
+  rejected: 'synthetic',
 }
 
 function ScoreRing({ score }: { score: number | null }) {
@@ -103,8 +110,8 @@ export default async function ReviewPage({ params }: { params: { id: string } })
 
   // Mark as reviewing on first open if still pending
   if (item.status === 'pending') {
-    await updateQueueStatus(item.id, 'reviewing')
-    item.status = 'reviewing'
+    await updateQueueStatus(item.id, 'brewing')
+    item.status = 'brewing'
   }
 
   const details  = (item.analysis?.rawResult as any)?.details ?? {}
@@ -171,7 +178,7 @@ export default async function ReviewPage({ params }: { params: { id: string } })
               </a>
               <div className="flex flex-wrap gap-2 items-center">
                 <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[item.status] ?? ''}`}>
-                  {item.status}
+                  {STATUS_LABELS[item.status] ?? item.status}
                 </span>
                 <span className="text-xs text-ale-muted">
                   {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
