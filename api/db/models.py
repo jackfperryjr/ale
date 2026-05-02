@@ -35,7 +35,10 @@ class User(Base):
     id = Column(String, primary_key=True, default=_uuid)
     session_id = Column(String, unique=True, nullable=False, index=True)
     email = Column(String, nullable=True)
-    credits = Column(Integer, nullable=False, default=20)
+    google_id = Column(String, unique=True, nullable=True, index=True)
+    credits = Column(Integer, nullable=False, default=0)
+    daily_credits = Column(Integer, nullable=False, default=2)
+    credits_reset_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=_now)
 
 

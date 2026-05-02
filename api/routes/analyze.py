@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ..auth import require_api_key
 from ..db.database import get_db
 from ..db.models import Analysis, BrewmasterQueue
-from ..db.users import ANALYZE_COST, get_or_create_user
+from ..db.users import ANALYZE_COST, can_spend, deduct, get_or_create_user
 from ..detection.hive import detect
 
 router = APIRouter()
@@ -36,14 +36,14 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
 
     # Check credits before calling Hive
     user = get_or_create_user(req.session_id, db) if req.session_id else None
-    if user and user.credits < ANALYZE_COST:
+    if user and not can_spend(user, ANALYZE_COST):
         raise HTTPException(status_code=402, detail="Insufficient credits")
 
     result = await detect(req.url)
 
     # Deduct only after a successful Hive call
     if user:
-        user.credits -= ANALYZE_COST
+        deduct(user, ANALYZE_COST)
 
     record = Analysis(
         url=req.url,
@@ -64,7 +64,7 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
         "label": record.label,
         "details": result.get("details", {}),
         "cached": False,
-        "credits": user.credits if user else None,
+        "daily_credits": user.daily_credits if user else None,
     }
 
 

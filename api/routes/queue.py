@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from ..auth import require_api_key
 from ..db.database import get_db
 from ..db.models import Analysis, BrewmasterQueue
-from ..db.users import QUEUE_COST, get_or_create_user
+from ..db.users import QUEUE_COST, can_spend, deduct, get_or_create_user
 
 router = APIRouter()
 
@@ -58,11 +58,11 @@ def _queue_dict(item: BrewmasterQueue, analysis: Analysis | None = None) -> dict
 @router.post("/queue")
 def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
     user = get_or_create_user(req.session_id, db) if req.session_id else None
-    if user and user.credits < QUEUE_COST:
+    if user and not can_spend(user, QUEUE_COST):
         raise HTTPException(status_code=402, detail="Insufficient credits")
 
     if user:
-        user.credits -= QUEUE_COST
+        deduct(user, QUEUE_COST)
 
     item = BrewmasterQueue(
         url=req.url,
@@ -73,7 +73,7 @@ def add_to_queue(req: QueueRequest, db: Session = Depends(get_db)):
     db.add(item)
     db.commit()
     db.refresh(item)
-    return {"id": item.id, "status": item.status, "queued": True, "credits": user.credits if user else None}
+    return {"id": item.id, "status": item.status, "queued": True, "daily_credits": user.daily_credits if user else None}
 
 
 @router.get("/stats", dependencies=[Depends(require_api_key)])
