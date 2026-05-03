@@ -3,7 +3,7 @@
 FastAPI backend for the Authenticity Logic Engine — runs deepfake and AI-generation detection via [Hive AI](https://thehive.ai/) and manages the human review queue.
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/jackfperryjr/ale-api?style=flat-square&color=4a90d9&label=latest" alt="Latest Release" />
+  <img src="https://github.com/jackfperryjr/ale-api/actions/workflows/deploy.yml/badge.svg" alt="Build Status" height="20">
   <img src="https://img.shields.io/badge/python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" />
   <img src="https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi" />
   <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?flat-square&logo=sqlalchemy&logoColor=white" />
