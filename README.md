@@ -1,6 +1,14 @@
 # ALE API
 
-FastAPI backend for the Authenticity Logic Engine — runs deepfake and AI-generation detection via [Hive AI](https://thehive.ai/) and manages the human notarization queue.
+FastAPI backend for the Authenticity Logic Engine — runs deepfake and AI-generation detection via [Hive AI](https://thehive.ai/) and manages the human review queue.
+
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/jackfperryjr/ale-api?style=flat-square&color=4a90d9&label=latest" alt="Latest Release" />
+  <img src="https://img.shields.io/badge/python-3670A0?style=flat-square&logo=python&logoColor=ffdd54" />
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi" />
+  <img src="https://img.shields.io/badge/SQLAlchemy-D71F00?flat-square&logo=sqlalchemy&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-316192?style=flat-square&logo=postgresql&logoColor=white" />
+</p>
 
 ---
 
@@ -22,10 +30,9 @@ reality_score = (1 - max(ai_generated, deepfake)) × 100
 
 | Score   | Label       | Meaning                                   |
 |---------|-------------|-------------------------------------------|
-| ≥ 85    | Pure ALE    | Strong indicators of genuine content      |
-| 60–84   | Mixed Pour  | Inconclusive — may warrant closer review  |
-| 30–59   | Flat        | Likely synthetic or manipulated           |
-| < 30    | Skunked     | High confidence of AI generation/deepfake |
+| ≥ 70    | Pure ALE    | Strong indicators of genuine content      |
+| 40–69   | Mixed Pour  | Inconclusive — may warrant closer review  |
+| < 40    | Skunked     | High confidence of AI generation/deepfake |
 
 ---
 
@@ -47,48 +54,6 @@ ale-api/
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-- Python 3.11+
-- A PostgreSQL database (Neon recommended)
-- A [Hive AI](https://thehive.ai/) API key
-
-### Setup
-
-```bash
-python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-Create `.env`:
-
-```env
-DATABASE_URL=postgresql://user:password@host/dbname
-HIVE_SECRET_KEY=your_hive_key
-```
-
-Start the server:
-
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-> If `HIVE_SECRET_KEY` is omitted, the API runs in mock mode: scores are deterministically generated from the URL string. Useful for local development without spending API credits.
-
----
-
-## Environment Variables
-
-| Variable          | Required | Description                                  |
-|-------------------|----------|----------------------------------------------|
-| `DATABASE_URL`    | Yes      | PostgreSQL connection string                 |
-| `HIVE_SECRET_KEY` | No       | Hive AI Bearer token. Omit to use mock mode. |
-
----
-
 ## Data Models
 
 ### `analyses`
@@ -106,7 +71,7 @@ Stores every AI scan result.
 | `session_id`   | string   | Anonymous extension session UUID        |
 | `created_at`   | datetime | UTC timestamp                           |
 
-### `human_queue`
+### `brewmaster_queue`
 
 Tracks items submitted for human review.
 
