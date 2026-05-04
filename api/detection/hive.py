@@ -23,7 +23,6 @@ async def _hive(url: str) -> dict:
         "Content-Type": "application/json",
     }
     payload = {
-        "media_metadata": True,
         "input": [{"media_url": url}],
     }
 

@@ -1,3 +1,5 @@
+import math
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -10,15 +12,32 @@ from ..detection.hive import detect
 
 router = APIRouter()
 
+MAX_VIDEO_SECONDS = 600  # 10 minutes
+
+
+def _video_cost(duration_seconds: int | None) -> int:
+    if not duration_seconds:
+        return ANALYZE_COST
+    return math.ceil(duration_seconds / 180)  # 1 credit per 3 minutes
+
 
 class AnalyzeRequest(BaseModel):
     url: str
     video_id: str | None = None
     session_id: str | None = None
+    video_duration_seconds: int | None = None
 
 
 @router.post("/analyze")
 async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
+    if req.video_duration_seconds and req.video_duration_seconds > MAX_VIDEO_SECONDS:
+        mins = req.video_duration_seconds // 60
+        secs = req.video_duration_seconds % 60
+        raise HTTPException(
+            status_code=413,
+            detail=f"Video is too long ({mins}:{secs:02d}). Maximum is 10 minutes per analysis.",
+        )
+
     # Cached results are free — no Hive call made
     cached = (
         db.query(Analysis)
@@ -34,16 +53,18 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
             "cached": True,
         }
 
+    cost = _video_cost(req.video_duration_seconds)
+
     # Check credits before calling Hive
     user = get_or_create_user(req.session_id, db) if req.session_id else None
-    if user and not can_spend(user, ANALYZE_COST):
+    if user and not can_spend(user, cost):
         raise HTTPException(status_code=402, detail="Insufficient credits")
 
     result = await detect(req.url)
 
     # Deduct only after a successful Hive call
     if user:
-        deduct(user, ANALYZE_COST)
+        deduct(user, cost)
 
     record = Analysis(
         url=req.url,
