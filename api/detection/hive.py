@@ -28,7 +28,12 @@ async def _hive(url: str) -> dict:
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(HIVE_ENDPOINT, json=payload, headers=headers)
-        resp.raise_for_status()
+        if not resp.is_success:
+            raise httpx.HTTPStatusError(
+                f"Hive {resp.status_code}: {resp.text}",
+                request=resp.request,
+                response=resp,
+            )
         data = resp.json()
 
     score = _parse_score(data)
