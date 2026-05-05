@@ -1,32 +1,25 @@
 import base64
-import io
 import os
 import random
 
 import httpx
-from PIL import Image
 
-# The playground calls this YOUR_SECRET_KEY — it goes in the Bearer header
 HIVE_SECRET_KEY = os.getenv("HIVE_SECRET_KEY", "")
 
 HIVE_ENDPOINT = (
     "https://api.thehive.ai/api/v3/hive/ai-generated-and-deepfake-content-detection"
 )
 
-_MAX_SIDE = 2048  # resize if either dimension exceeds this
+_MAX_B64_BYTES = 15 * 1024 * 1024  # stay under Hive's 20 MB base64 limit
 
 
-async def _fetch_as_jpeg_b64(url: str) -> str:
-    """Download any image URL, convert to JPEG, return as base64 string."""
+async def _fetch_as_b64(url: str) -> str:
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
-    img = Image.open(io.BytesIO(r.content)).convert("RGB")
-    if max(img.width, img.height) > _MAX_SIDE:
-        img.thumbnail((_MAX_SIDE, _MAX_SIDE), Image.LANCZOS)
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    return base64.b64encode(buf.getvalue()).decode()
+    if len(r.content) > _MAX_B64_BYTES:
+        raise ValueError("Media too large for base64 upload")
+    return base64.b64encode(r.content).decode()
 
 
 async def detect(url: str) -> dict:
@@ -42,10 +35,9 @@ async def _hive(url: str) -> dict:
     }
 
     try:
-        b64 = await _fetch_as_jpeg_b64(url)
-        payload = {"input": [{"image_base64": b64}]}
+        b64 = await _fetch_as_b64(url)
+        payload = {"input": [{"media_base64": b64}]}
     except Exception:
-        # Fall back to URL if we can't fetch/convert the image ourselves
         payload = {"input": [{"media_url": url}]}
 
     async with httpx.AsyncClient(timeout=60) as client:
@@ -66,7 +58,6 @@ async def _hive(url: str) -> dict:
 def _parse_score(data: dict) -> float:
     try:
         classes = {c["class"]: c["value"] for c in data["output"][0]["classes"]}
-        # Use the worst signal: general AI generation vs. deepfake visual
         ai_prob = max(
             classes.get("ai_generated", 0.0),
             classes.get("deepfake", 0.0),
@@ -77,7 +68,6 @@ def _parse_score(data: dict) -> float:
 
 
 def _parse_details(data: dict) -> dict:
-    """Pull out the signals we care about for the Brewery forensics view."""
     try:
         classes = {c["class"]: c["value"] for c in data["output"][0]["classes"]}
         return {
