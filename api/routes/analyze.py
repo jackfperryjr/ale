@@ -12,6 +12,8 @@ from ..db.models import Analysis, BrewmasterQueue
 from ..db.users import IMAGE_COST, VIDEO_COST, can_spend, deduct, get_or_create_user
 from ..detection.hive import detect
 
+_MAX_VIDEO_SECONDS = 900  # 15 minutes
+
 router = APIRouter()
 
 _YOUTUBE_HOSTS = {"www.youtube.com", "youtube.com", "youtu.be", "m.youtube.com"}
@@ -60,8 +62,17 @@ class AnalyzeRequest(BaseModel):
     video_duration_seconds: int | None = None
 
 
+@router.get("/me")
+def get_me(session_id: str, db: Session = Depends(get_db)):
+    user = get_or_create_user(session_id, db)
+    return {"daily_credits": user.daily_credits, "credits": user.credits}
+
+
 @router.post("/analyze")
 async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
+    if req.video_duration_seconds and req.video_duration_seconds > _MAX_VIDEO_SECONDS:
+        raise HTTPException(status_code=413, detail="Video is too long. Max 15 minutes per pour.")
+
     # Cached results are free — no Hive call made
     cached = (
         db.query(Analysis)
@@ -119,6 +130,7 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
         "details": result.get("details", {}),
         "cached": False,
         "daily_credits": user.daily_credits if user else None,
+        "credits": user.credits if user else None,
     }
 
 
