@@ -4,7 +4,6 @@ import random
 
 import httpx
 
-# The playground calls this YOUR_SECRET_KEY — it goes in the Bearer header
 HIVE_SECRET_KEY = os.getenv("HIVE_SECRET_KEY", "")
 
 HIVE_ENDPOINT = (
@@ -15,7 +14,6 @@ _MAX_B64_BYTES = 15 * 1024 * 1024  # stay under Hive's 20 MB base64 limit
 
 
 async def _fetch_as_b64(url: str) -> str:
-    """Download a media URL and return it as a base64 string."""
     async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
         r.raise_for_status()
@@ -40,7 +38,6 @@ async def _hive(url: str) -> dict:
         b64 = await _fetch_as_b64(url)
         payload = {"input": [{"media_base64": b64}]}
     except Exception:
-        # Fall back to URL if we can't fetch locally (e.g. too large, network error)
         payload = {"input": [{"media_url": url}]}
 
     async with httpx.AsyncClient(timeout=60) as client:
@@ -61,7 +58,6 @@ async def _hive(url: str) -> dict:
 def _parse_score(data: dict) -> float:
     try:
         classes = {c["class"]: c["value"] for c in data["output"][0]["classes"]}
-        # Use the worst signal: general AI generation vs. deepfake visual
         ai_prob = max(
             classes.get("ai_generated", 0.0),
             classes.get("deepfake", 0.0),
@@ -72,7 +68,6 @@ def _parse_score(data: dict) -> float:
 
 
 def _parse_details(data: dict) -> dict:
-    """Pull out the signals we care about for the Brewery forensics view."""
     try:
         classes = {c["class"]: c["value"] for c in data["output"][0]["classes"]}
         return {
@@ -80,6 +75,7 @@ def _parse_details(data: dict) -> dict:
             "deepfake": classes.get("deepfake", None),
             "ai_generated_audio": classes.get("ai_generated_audio", None),
             "not_ai_generated": classes.get("not_ai_generated", None),
+            # Maybe add more fields from Hive's response later?
         }
     except (KeyError, IndexError):
         return {}

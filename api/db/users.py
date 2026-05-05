@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from .models import User
 
-DAILY_FREE_CREDITS = 2
-ANALYZE_COST = 1
-QUEUE_COST = 25
+DAILY_FREE_CREDITS = 3
+IMAGE_COST = 1
+VIDEO_COST = 3
+QUEUE_COST = 20
 
 
 def _reset_daily_if_needed(user: User) -> None:
@@ -34,9 +35,9 @@ def get_or_create_user(session_id: str, db: Session) -> User:
     if not user:
         user = User(session_id=session_id)
         db.add(user)
-        db.commit()
-        db.refresh(user)
     _reset_daily_if_needed(user)
+    db.commit()  # commit creation + any daily reset immediately so it survives later failures
+    db.refresh(user)
     return user
 
 
@@ -53,8 +54,6 @@ def get_or_create_user_by_google(google_id: str, email: str, db: Session) -> Use
             email=email,
         )
         db.add(user)
-        db.commit()
-        db.refresh(user)
     else:
         if not user.google_id:
             user.google_id = google_id
@@ -62,4 +61,5 @@ def get_or_create_user_by_google(google_id: str, email: str, db: Session) -> Use
             user.email = email
     _reset_daily_if_needed(user)
     db.commit()
+    db.refresh(user)
     return user
