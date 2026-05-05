@@ -75,6 +75,7 @@ def _parse_details(data: dict) -> dict:
             "deepfake": classes.get("deepfake", None),
             "ai_generated_audio": classes.get("ai_generated_audio", None),
             "not_ai_generated": classes.get("not_ai_generated", None),
+            # Maybe add more fields from Hive's response later?
         }
     except (KeyError, IndexError):
         return {}

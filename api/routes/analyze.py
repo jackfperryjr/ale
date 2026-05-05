@@ -1,3 +1,6 @@
+import re
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from httpx import HTTPStatusError as HiveHTTPError
 from pydantic import BaseModel
@@ -12,20 +15,41 @@ from ..detection.hive import detect
 router = APIRouter()
 
 _YOUTUBE_HOSTS = {"www.youtube.com", "youtube.com", "youtu.be", "m.youtube.com"}
+_FACEBOOK_PAGE_HOSTS = {"www.facebook.com", "facebook.com", "fb.com", "fb.watch"}
 
 
 def _analyze_cost(video_id: str | None) -> int:
     return VIDEO_COST if video_id else IMAGE_COST
 
 
-def _resolve_media_url(url: str, video_id: str | None) -> str:
-    """Convert social video page URLs to a direct media URL Hive can process."""
+async def _resolve_media_url(url: str, video_id: str | None) -> str:
     try:
         host = url.split("/")[2]
     except IndexError:
         return url
+
     if host in _YOUTUBE_HOSTS and video_id:
         return f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+
+    # Facebook page URLs (reels, posts) — try to extract og:image from the page.
+    # Works for public content; fails silently for login-gated content.
+    if host in _FACEBOOK_PAGE_HOSTS:
+        try:
+            async with httpx.AsyncClient(timeout=8, follow_redirects=True) as client:
+                r = await client.get(
+                    url,
+                    headers={"User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"},
+                )
+            m = re.search(r'<meta[^>]+property="og:image"[^>]+content="([^"]+)"', r.text)
+            if not m:
+                m = re.search(r'<meta[^>]+content="([^"]+)"[^>]+property="og:image"', r.text)
+            if m:
+                og_image = m.group(1).replace("&amp;", "&")
+                if og_image.startswith("http"):
+                    return og_image
+        except Exception:
+            pass
+
     return url
 
 
@@ -60,7 +84,7 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
     if user and not can_spend(user, cost):
         raise HTTPException(status_code=402, detail="Insufficient credits")
 
-    hive_url = _resolve_media_url(req.url, req.video_id)
+    hive_url = await _resolve_media_url(req.url, req.video_id)
     try:
         result = await detect(hive_url)
     except HiveHTTPError as e:
