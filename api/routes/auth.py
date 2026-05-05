@@ -34,4 +34,5 @@ async def auth_google(req: GoogleAuthRequest, db: Session = Depends(get_db)):
         "session_id": user.session_id,
         "email": email,
         "daily_credits": user.daily_credits,
+        "credits": user.credits,
     }
