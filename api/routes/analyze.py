@@ -1,6 +1,7 @@
 import math
 
 from fastapi import APIRouter, Depends, HTTPException
+from httpx import HTTPStatusError as HiveHTTPError
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -14,11 +15,24 @@ router = APIRouter()
 
 MAX_VIDEO_SECONDS = 600  # 10 minutes
 
+_YOUTUBE_HOSTS = {"www.youtube.com", "youtube.com", "youtu.be", "m.youtube.com"}
+
 
 def _video_cost(duration_seconds: int | None) -> int:
     if not duration_seconds:
         return ANALYZE_COST
     return math.ceil(duration_seconds / 180)  # 1 credit per 3 minutes
+
+
+def _resolve_media_url(url: str, video_id: str | None) -> str:
+    """Convert social video page URLs to a direct media URL Hive can process."""
+    try:
+        host = url.split("/")[2]
+    except IndexError:
+        return url
+    if host in _YOUTUBE_HOSTS and video_id:
+        return f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+    return url
 
 
 class AnalyzeRequest(BaseModel):
@@ -60,7 +74,16 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
     if user and not can_spend(user, cost):
         raise HTTPException(status_code=402, detail="Insufficient credits")
 
-    result = await detect(req.url)
+    hive_url = _resolve_media_url(req.url, req.video_id)
+    try:
+        result = await detect(hive_url)
+    except HiveHTTPError as e:
+        if e.response.status_code == 400:
+            raise HTTPException(
+                status_code=422,
+                detail="Media could not be processed. Make sure the URL points to a supported image or video.",
+            )
+        raise
 
     # Deduct only after a successful Hive call
     if user:

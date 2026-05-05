@@ -1,7 +1,10 @@
+import base64
+import io
 import os
 import random
 
 import httpx
+from PIL import Image
 
 # The playground calls this YOUR_SECRET_KEY — it goes in the Bearer header
 HIVE_SECRET_KEY = os.getenv("HIVE_SECRET_KEY", "")
@@ -9,6 +12,21 @@ HIVE_SECRET_KEY = os.getenv("HIVE_SECRET_KEY", "")
 HIVE_ENDPOINT = (
     "https://api.thehive.ai/api/v3/hive/ai-generated-and-deepfake-content-detection"
 )
+
+_MAX_SIDE = 2048  # resize if either dimension exceeds this
+
+
+async def _fetch_as_jpeg_b64(url: str) -> str:
+    """Download any image URL, convert to JPEG, return as base64 string."""
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        r.raise_for_status()
+    img = Image.open(io.BytesIO(r.content)).convert("RGB")
+    if max(img.width, img.height) > _MAX_SIDE:
+        img.thumbnail((_MAX_SIDE, _MAX_SIDE), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85)
+    return base64.b64encode(buf.getvalue()).decode()
 
 
 async def detect(url: str) -> dict:
@@ -22,9 +40,13 @@ async def _hive(url: str) -> dict:
         "Authorization": f"Bearer {HIVE_SECRET_KEY}",
         "Content-Type": "application/json",
     }
-    payload = {
-        "input": [{"media_url": url}],
-    }
+
+    try:
+        b64 = await _fetch_as_jpeg_b64(url)
+        payload = {"input": [{"image_base64": b64}]}
+    except Exception:
+        # Fall back to URL if we can't fetch/convert the image ourselves
+        payload = {"input": [{"media_url": url}]}
 
     async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(HIVE_ENDPOINT, json=payload, headers=headers)
