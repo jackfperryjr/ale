@@ -9,7 +9,7 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 
 from .auth import require_api_key
 from .db.database import init_db
-from .routes import admin, analyze, auth, queue
+from .routes import admin, analyze, auth, donations, queue
 
 
 @asynccontextmanager
@@ -37,6 +37,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(analyze.router)
 app.include_router(queue.router)
+app.include_router(donations.router)
 app.include_router(admin.router, dependencies=[Depends(require_api_key)])
 
 
