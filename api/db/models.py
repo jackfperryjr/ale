@@ -42,6 +42,21 @@ class User(Base):
     created_at = Column(DateTime, default=_now)
 
 
+class Donation(Base):
+    __tablename__ = "donations"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    source = Column(String, nullable=False)        # "github" | "stripe"
+    event_type = Column(String, nullable=True)
+    amount_cents = Column(Integer, nullable=True)
+    currency = Column(String, nullable=False, default="usd")
+    donor_name = Column(String, nullable=True)
+    donor_email = Column(String, nullable=True)
+    external_id = Column(String, nullable=True, unique=True, index=True)
+    raw_payload = Column(JSON)
+    created_at = Column(DateTime, default=_now)
+
+
 class BrewmasterQueue(Base):
     __tablename__ = "brewmaster_queue"
 
