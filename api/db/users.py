@@ -41,6 +41,17 @@ def get_or_create_user(session_id: str, db: Session) -> User:
     return user
 
 
+def get_or_create_user_by_email(email: str, db: Session) -> User:
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        user = User(session_id=str(uuid.uuid4()), email=email)
+        db.add(user)
+    _reset_daily_if_needed(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def get_or_create_user_by_google(google_id: str, email: str, db: Session) -> User:
     user = (
         db.query(User)
