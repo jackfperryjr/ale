@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from ..auth import require_api_key
 from ..db.database import get_db
 from ..db.models import Analysis, BrewmasterQueue
-from ..db.users import IMAGE_COST, VIDEO_COST, can_spend, deduct, get_or_create_user
+from ..db.users import IMAGE_COST, VIDEO_COST, can_spend, deduct, get_or_create_user, get_or_create_user_by_email
 from ..detection.hive import detect
 
 _MAX_VIDEO_SECONDS = 900  # 15 minutes
@@ -59,12 +59,18 @@ class AnalyzeRequest(BaseModel):
     url: str
     video_id: str | None = None
     session_id: str | None = None
+    portal_email: str | None = None
     video_duration_seconds: int | None = None
 
 
 @router.get("/me")
-def get_me(session_id: str, db: Session = Depends(get_db)):
-    user = get_or_create_user(session_id, db)
+def get_me(session_id: str | None = None, email: str | None = None, db: Session = Depends(get_db)):
+    if email:
+        user = get_or_create_user_by_email(email, db)
+    elif session_id:
+        user = get_or_create_user(session_id, db)
+    else:
+        raise HTTPException(status_code=400, detail="session_id or email required")
     return {"daily_credits": user.daily_credits, "credits": user.credits}
 
 
@@ -91,7 +97,12 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
     cost = _analyze_cost(req.video_id)
 
     # Check credits before calling Hive
-    user = get_or_create_user(req.session_id, db) if req.session_id else None
+    if req.portal_email:
+        user = get_or_create_user_by_email(req.portal_email, db)
+    elif req.session_id:
+        user = get_or_create_user(req.session_id, db)
+    else:
+        user = None
     if user and not can_spend(user, cost):
         raise HTTPException(status_code=402, detail="Insufficient credits")
 
