@@ -131,12 +131,15 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
     try:
         result = await detect(hive_url)
     except HiveHTTPError as e:
-        if e.response.status_code == 400:
+        status = e.response.status_code
+        if status == 400:
             raise HTTPException(
                 status_code=422,
                 detail="Media could not be processed. Make sure the URL points to a supported image or video.",
             )
-        raise
+        if status == 429:
+            raise HTTPException(status_code=429, detail="Too many requests to the analysis service. Try again in a moment.")
+        raise HTTPException(status_code=502, detail=f"Media analysis service error ({status}).")
 
     # Deduct only after a successful Hive call
     if user:
