@@ -18,6 +18,7 @@ router = APIRouter()
 
 _YOUTUBE_HOSTS = {"www.youtube.com", "youtube.com", "youtu.be", "m.youtube.com"}
 _FACEBOOK_PAGE_HOSTS = {"www.facebook.com", "facebook.com", "fb.com", "fb.watch"}
+_X_HOSTS = {"x.com", "www.x.com", "twitter.com", "www.twitter.com"}
 
 
 def _analyze_cost(video_id: str | None) -> int:
@@ -32,6 +33,26 @@ async def _resolve_media_url(url: str, video_id: str | None) -> str:
 
     if host in _YOUTUBE_HOSTS and video_id:
         return f"https://i.ytimg.com/vi/{video_id}/maxresdefault.jpg"
+
+    # X.com / Twitter — fetch the tweet page as Twitterbot to get the video thumbnail
+    # from og:image. Falls through silently for login-gated or unavailable tweets.
+    if host in _X_HOSTS and video_id:
+        try:
+            tweet_url = f"https://x.com/i/status/{video_id}"
+            async with httpx.AsyncClient(timeout=8, follow_redirects=True) as client:
+                r = await client.get(
+                    tweet_url,
+                    headers={"User-Agent": "Twitterbot/1.0"},
+                )
+            m = re.search(r'<meta[^>]+property="og:image"[^>]+content="([^"]+)"', r.text)
+            if not m:
+                m = re.search(r'<meta[^>]+content="([^"]+)"[^>]+property="og:image"', r.text)
+            if m:
+                og_image = m.group(1).replace("&amp;", "&")
+                if og_image.startswith("http") and "pbs.twimg.com" in og_image:
+                    return og_image
+        except Exception:
+            pass
 
     # Facebook page URLs (reels, posts) — try to extract og:image from the page.
     # Works for public content; fails silently for login-gated content.
