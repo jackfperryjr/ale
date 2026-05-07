@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -67,3 +68,9 @@ def openapi(request: Request):
 @app.get("/")
 def root():
     return {"name": "ALE API", "status": "pouring"}
+
+
+@app.get("/status")
+def status():
+    message = os.getenv("STATUS_MESSAGE", "").strip()
+    return {"active": bool(message), "message": message}
