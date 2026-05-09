@@ -60,6 +60,16 @@ class Donation(Base):
     created_at = Column(DateTime, default=_now)
 
 
+class ApiError(Base):
+    __tablename__ = "api_errors"
+
+    id = Column(String, primary_key=True, default=_uuid)
+    provider = Column(String, nullable=False)    # "hive"
+    status_code = Column(Integer, nullable=False)
+    retry_after = Column(Integer)                # seconds, from Retry-After header if present
+    created_at = Column(DateTime, default=_now)
+
+
 class BrewmasterQueue(Base):
     __tablename__ = "brewmaster_queue"
 

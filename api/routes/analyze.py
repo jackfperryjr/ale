@@ -1,4 +1,5 @@
 import re
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import require_api_key
 from ..db.database import get_db
-from ..db.models import Analysis, BrewmasterQueue
+from ..db.models import Analysis, ApiError, BrewmasterQueue
 from ..db.users import IMAGE_COST, VIDEO_COST, can_spend, deduct, get_or_create_user, get_or_create_user_by_email
 from ..detection.hive import detect
 
@@ -138,6 +139,13 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
         result = await detect(hive_url)
     except HiveHTTPError as e:
         status = e.response.status_code
+        retry_after = None
+        try:
+            retry_after = int(e.response.headers.get("retry-after", ""))
+        except (ValueError, TypeError):
+            pass
+        db.add(ApiError(provider="hive", status_code=status, retry_after=retry_after))
+        db.commit()
         if status == 400:
             raise HTTPException(
                 status_code=422,
@@ -232,6 +240,28 @@ def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
     if not record:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return record
+
+
+@router.get("/api-errors", dependencies=[Depends(require_api_key)])
+def list_api_errors(hours: int = 24, db: Session = Depends(get_db)):
+    since = datetime.now(timezone.utc) - timedelta(hours=hours)
+    errors = (
+        db.query(ApiError)
+        .filter(ApiError.created_at >= since)
+        .order_by(ApiError.created_at.desc())
+        .limit(500)
+        .all()
+    )
+    return [
+        {
+            "id": e.id,
+            "provider": e.provider,
+            "status_code": e.status_code,
+            "retry_after": e.retry_after,
+            "created_at": e.created_at,
+        }
+        for e in errors
+    ]
 
 
 @router.patch("/analyze/{analysis_id}/disagree")
