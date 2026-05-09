@@ -82,6 +82,12 @@ class AnalyzeRequest(BaseModel):
     session_id: str | None = None
     portal_email: str | None = None
     video_duration_seconds: int | None = None
+    content_type: str | None = None   # "image" | "video"
+    trigger: str | None = None        # "cap_click" | "image_hover" | "manual_url"
+
+
+class DisagreeRequest(BaseModel):
+    session_id: str | None = None
 
 
 @router.get("/me")
@@ -153,6 +159,8 @@ async def analyze(req: AnalyzeRequest, db: Session = Depends(get_db)):
         label=result["label"],
         raw_result={"details": result.get("details"), "raw": result.get("raw")},
         status="complete",
+        content_type=req.content_type,
+        trigger=req.trigger,
     )
     db.add(record)
     db.commit()
@@ -205,6 +213,9 @@ def list_analyses(limit: int = 100, db: Session = Depends(get_db)):
             "raw_result": a.raw_result,
             "status": a.status,
             "session_id": a.session_id,
+            "content_type": a.content_type,
+            "trigger": a.trigger,
+            "user_disagreed": a.user_disagreed,
             "created_at": a.created_at,
             "review": {
                 "status": review.status,
@@ -221,3 +232,13 @@ def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
     if not record:
         raise HTTPException(status_code=404, detail="Analysis not found")
     return record
+
+
+@router.patch("/analyze/{analysis_id}/disagree")
+def mark_disagreement(analysis_id: str, req: DisagreeRequest, db: Session = Depends(get_db)):
+    record = db.query(Analysis).filter(Analysis.id == analysis_id).first()
+    if not record:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    record.user_disagreed = True
+    db.commit()
+    return {"ok": True}
