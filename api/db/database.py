@@ -28,6 +28,9 @@ def init_db():
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_credits INTEGER NOT NULL DEFAULT 2"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS credits_reset_date TIMESTAMPTZ"))
+        conn.execute(text("ALTER TABLE analyses ADD COLUMN IF NOT EXISTS content_type VARCHAR"))
+        conn.execute(text("ALTER TABLE analyses ADD COLUMN IF NOT EXISTS trigger VARCHAR"))
+        conn.execute(text("ALTER TABLE analyses ADD COLUMN IF NOT EXISTS user_disagreed BOOLEAN NOT NULL DEFAULT FALSE"))
         conn.commit()
 
 

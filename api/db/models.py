@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Float, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, JSON, String, Text
 
 from .database import Base
 
@@ -26,6 +26,9 @@ class Analysis(Base):
     # "pending" | "complete" | "error"
     status = Column(String, nullable=False, default="complete")
     session_id = Column(String, index=True)
+    content_type = Column(String)       # "image" | "video"
+    trigger = Column(String)            # "cap_click" | "image_hover" | "manual_url"
+    user_disagreed = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=_now)
 
 
